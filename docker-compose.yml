@@ -1,0 +1,29 @@
+version: '3.4'
+
+services:
+    db:
+        image: postgres:latest
+        ports:
+            - "5432"
+        restart: always
+        environment:
+            POSTGRES_USER: myuser
+            POSTGRES_PASSWORD: mypassword
+            POSTGRES_DB: mydatabase
+    api:
+        build: ./SquaresAPI
+        restart: always
+        ports:
+            - "8085:80"
+        depends_on:
+            - db
+        environment:
+            DB_CONNECTION_STRING: "Server=db;Port=5432;Database=mydatabase;User Id=myuser;Password=mypassword;"
+    web:
+        image: dpage/pgadmin4:latest
+        restart: always
+        ports:
+            - "8080:80"
+        environment:
+            PGADMIN_DEFAULT_EMAIL: admin@example.com
+            PGADMIN_DEFAULT_PASSWORD: password
