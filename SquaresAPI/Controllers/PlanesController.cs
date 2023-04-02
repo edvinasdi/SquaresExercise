@@ -1,4 +1,5 @@
 using AutoMapper;
+using Hangfire;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SquaresAPI.Data;
@@ -19,14 +20,11 @@ namespace SquaresAPI.Controllers
 
         private readonly IMapper _mapper;
 
-        private readonly SquaresCalculatorService _squaresCalculatorService;
-
-        public PlanesController(ILogger<PlanesController> logger, ApiDbContext context, IMapper mapper, SquaresCalculatorService squaresCalculatorService)
+        public PlanesController(ILogger<PlanesController> logger, ApiDbContext context, IMapper mapper)
         {
             _logger = logger;
             _context = context;
             _mapper = mapper;
-            _squaresCalculatorService = squaresCalculatorService;
         }
 
         [HttpGet(Name = "Get all Planes")]
@@ -59,6 +57,8 @@ namespace SquaresAPI.Controllers
             await _context.SaveChangesAsync();
 
             var result = _mapper.Map<ImportedPlane>(plane);
+
+            BackgroundJob.Enqueue<SquaresCalculatorService>(service => service.Calculate());
 
             return Ok(result);
         }
