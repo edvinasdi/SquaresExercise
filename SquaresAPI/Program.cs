@@ -3,7 +3,7 @@ using SquaresAPI.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = builder.Configuration.GetConnectionString("SquaresDatabase");
 
 // Add services to the container.
 builder.Services.AddControllers();
