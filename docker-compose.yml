@@ -1,8 +1,12 @@
 version: '3.4'
 
+volumes:
+    db_volume:
+
 services:
     db:
         image: postgres:latest
+        container_name: postgres-db
         ports:
             - "5432"
         restart: always
@@ -10,17 +14,21 @@ services:
             POSTGRES_USER: myuser
             POSTGRES_PASSWORD: mypassword
             POSTGRES_DB: mydatabase
+        volumes:
+            - db_volume:/var/lib/postgresql/data
     api:
         build: ./SquaresAPI
+        container_name: squares-api
         restart: always
         ports:
             - "8085:80"
         depends_on:
             - db
         environment:
-            DB_CONNECTION_STRING: "Server=db;Port=5432;Database=mydatabase;User Id=myuser;Password=mypassword;"
+            ConnectionStrings__SquaresDatabase: "Server=db;Port=5432;Database=mydatabase;User Id=myuser;Password=mypassword;"
     web:
         image: dpage/pgadmin4:latest
+        container_name: pg-admin
         restart: always
         ports:
             - "8080:80"

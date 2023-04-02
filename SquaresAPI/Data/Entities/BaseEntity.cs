@@ -1,9 +1,7 @@
 ﻿namespace SquaresAPI.Data.Entities
 {
-    public class List
+    public class BaseEntity
     {
         public Guid Id { get; set; }
-
-        public bool Processed { get; set; }
     }
 }
