@@ -1,11 +1,11 @@
 using Hangfire;
-using Hangfire.Dashboard;
 using Hangfire.MemoryStorage;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using SquaresAPI.BackgroundProcessing;
 using SquaresAPI.Data;
 using SquaresAPI.Data.Repositories;
+using SquaresAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +19,11 @@ builder.Services.AddDbContext<ApiDbContext>(options => options.UseNpgsql(connect
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
 // Dependency injection
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IPlaneService, PlaneService>();
+builder.Services.AddScoped<IPlaneRepository, PlaneRepository>();
+builder.Services.AddScoped<IPointRepository, PointRepository>();
+builder.Services.AddScoped<ISquareRepository, SquareRepository>();
 builder.Services.AddScoped<IDatabaseStatusRepository, DatabaseStatusRepository>();
 
 // Configure and add Hangfire for background processing

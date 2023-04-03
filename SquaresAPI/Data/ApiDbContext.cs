@@ -39,7 +39,8 @@ namespace SquaresAPI.Data
                 entityTypeBuilder
                     .HasMany(square => square.Points)
                     .WithOne(point => point.Square)
-                    .HasConstraintName("FK_Square_Point");
+                    .HasConstraintName("FK_Square_Point")
+                    .OnDelete(DeleteBehavior.SetNull);
             });
         }
     }
