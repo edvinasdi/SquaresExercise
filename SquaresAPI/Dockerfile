@@ -8,8 +8,10 @@ FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
 COPY ["SquaresAPI.csproj", "SquaresAPI/"]
 RUN dotnet restore "SquaresAPI/SquaresAPI.csproj"
-COPY . .
+
 WORKDIR "/src/SquaresAPI"
+COPY . .
+
 RUN dotnet build "SquaresAPI.csproj" -c Release -o /app/build
 
 FROM build AS publish
