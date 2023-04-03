@@ -1,9 +1,6 @@
 using AutoMapper;
 using Hangfire;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SquaresAPI.Data;
-using SquaresAPI.Data.Entities;
 using SquaresAPI.Models.Request;
 using SquaresAPI.Models.Response;
 using SquaresAPI.Services;
@@ -11,56 +8,82 @@ using SquaresAPI.Services;
 namespace SquaresAPI.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("planes")]
     public class PlanesController : ControllerBase
     {
-        private readonly ILogger<PlanesController> _logger;
+        private readonly IPlaneService _planeService;
 
-        private readonly ApiDbContext _context;
-
-        private readonly IMapper _mapper;
-
-        public PlanesController(ILogger<PlanesController> logger, ApiDbContext context, IMapper mapper)
+        public PlanesController(IPlaneService planeService)
         {
-            _logger = logger;
-            _context = context;
-            _mapper = mapper;
+            _planeService = planeService;
         }
 
-        [HttpGet(Name = "Get all Planes")]
-        public async Task<IActionResult> Get()
+        [HttpPost("/planes")]
+        public async Task<IActionResult> ImportPoints(PlaneRequest planeRequest)
         {
-            var allPlanes = await _context.Planes.ToListAsync();
+            var planeResponse = await _planeService.ImportPoints(planeRequest);
 
-            return Ok(allPlanes);
+            BackgroundJob.Enqueue<SquaresCalculatorService>(service => service.CalculatePlaneSquares(planeResponse.Id));
+
+            return Ok(planeResponse);
         }
 
-        [HttpPost(Name = "Import a Plane of Points")]
-        public async Task<IActionResult> Post(ImportPlane importPlane)
+        [HttpPost("/planes/{planeId:guid}/points")]
+        public async Task<IActionResult> AddPointToPlane([FromRoute] Guid planeId, PointRequest pointRequest)
         {
-            var plane = new Plane();
-            _context.Add(plane);
-            await _context.SaveChangesAsync();
-
-            var points = new List<Point>();
-            foreach(var importPoint in importPlane.Points)
+            var result = await _planeService.AddPointToPlaneAsync(planeId, pointRequest);
+            if (result == null)
             {
-                points.Add(new Point()
-                {
-                    X = importPoint.X,
-                    Y = importPoint.Y,
-                    Plane = plane,
-                });
+                return BadRequest($"Plane with Id=\"{planeId}\" was not found");
             }
 
-            _context.Points.AddRange(points);
-            await _context.SaveChangesAsync();
-
-            var result = _mapper.Map<ImportedPlane>(plane);
-
-            BackgroundJob.Enqueue<SquaresCalculatorService>(service => service.Calculate());
+            BackgroundJob.Enqueue<SquaresCalculatorService>(service => service.CalculatePlaneSquares(planeId));
 
             return Ok(result);
+        }
+
+        [HttpDelete("/planes/points/{pointId:guid}")]
+        public async Task<IActionResult> DeletePointFromPlane([FromRoute] Guid pointId)
+        {
+            PlaneWithPointsResponse? plane = await _planeService.DeletePointFromPlaneAsync(pointId);
+            if (plane == null)
+            {
+                return BadRequest($"Point with Id=\"{pointId}\" was not found");
+            }
+
+            BackgroundJob.Enqueue<SquaresCalculatorService>(service => service.CalculatePlaneSquares(plane.Id));
+
+            return Ok(plane);
+        }
+
+        [HttpGet("{planeId:guid}")]
+        public async Task<IActionResult> GetPlaneWithPoints([FromRoute] Guid planeId)
+        {
+            PlaneWithPointsResponse? plane = await _planeService.GetPlaneAsync(planeId);
+            if (plane == null)
+            {
+                return BadRequest($"Plane with Id=\"{planeId}\" was not found");
+            }
+
+            return Ok(plane);
+        }
+
+        [HttpGet("/planes/{planeId:guid}/squares")]
+        public async Task<IActionResult> GetPlaneSquares([FromRoute] Guid planeId)
+        {
+            var plane = await _planeService.GetPlaneSquaresWithSquarePoints(planeId);
+
+            if (plane == null)
+            {
+                return BadRequest($"Plane with Id=\"{planeId}\" was not found");
+            }
+
+            if (!plane.Processed)
+            {
+                return Accepted($"Plane with Id=\"{planeId}\" exists but it's squares are not identified yet. Try again later.");
+            }
+
+            return Ok(plane);
         }
     }
 }
