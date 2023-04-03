@@ -2,7 +2,7 @@
 
 namespace SquaresAPI.Models.Response
 {
-    public class ImportedPoint : ImportPoint
+    public class PointResponse : PointRequest
     {
         public Guid Id { get; set; }
     }
