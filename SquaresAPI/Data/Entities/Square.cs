@@ -4,6 +4,13 @@ namespace SquaresAPI.Data.Entities
 {
     public class Square : BaseEntity
     {
+        public Square() { }
+
+        public Square(ICollection<Point> points)
+        {
+            Points = points;
+        }
+
         public Guid? PlaneId { get; set; }
 
         [MinLength(4)]
