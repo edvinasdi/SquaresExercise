@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using SquaresAPI.BackgroundProcessing;
 using SquaresAPI.Data;
+using SquaresAPI.Data.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,9 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<ApiDbContext>(options => options.UseNpgsql(connectionString));
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
+
+// Dependency injection
+builder.Services.AddScoped<IDatabaseStatusRepository, DatabaseStatusRepository>();
 
 // Configure and add Hangfire for background processing
 builder.Services.AddHangfire((sp, config) =>

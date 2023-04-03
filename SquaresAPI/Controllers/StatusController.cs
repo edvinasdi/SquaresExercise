@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using SquaresAPI.Data.Repositories;
 using SquaresAPI.Models;
 
 namespace SquaresAPI.Controllers
@@ -7,19 +8,23 @@ namespace SquaresAPI.Controllers
     [Route("[controller]")]
     public class StatusController : ControllerBase
     {
-        private readonly IWebHostEnvironment env;
+        private readonly IWebHostEnvironment _env;
 
-        public StatusController(IWebHostEnvironment env)
+        private readonly IDatabaseStatusRepository _databaseStatusRepostory;
+
+        public StatusController(IWebHostEnvironment env, IDatabaseStatusRepository databaseStatusRepostory)
         {
-            this.env = env;
+            this._env = env;
+            _databaseStatusRepostory = databaseStatusRepostory;
         }
-        
-        [HttpGet(Name = "GetStatus")]
+
+        [HttpGet("/status")]
         public ActionResult GetStatus()
         {
             return Ok(new Status()
             {
-                Environment = env.EnvironmentName,
+                Environment = _env.EnvironmentName,
+                DatabaseStatus = _databaseStatusRepostory.CanConnect() ? "all good" : "woops, something's not right",
             });
         }
     }
